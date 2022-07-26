@@ -1,23 +1,74 @@
 import requests
-# import io
-import winsound
-# from  pydub import AudioSegment
-# from pydub.playback import play
 import urllib
+from pypinyin import lazy_pinyin
+import romajitable
 
-speaker=2
-tmp = "クエリの初期値を得ます,ここで得られたクエリはそのまま音声合成に利用できます。"
+#四国めたん: 2064
+#ずんだもん: 3175
+#春日部つむぎ：8
+#もち子さん： 20
+#雨晴はう： 10
+#冥鳴ひまり：14
+
+speaker=3
+speed=1
+tmp = """
+给阿姨倒杯茶好吧，给阿姨倒一杯茶。
+
+阿姨给你倒一杯卡布奇诺。
+
+开始你的炸弹秀！
+
+炸他炸他，漂亮！
+
+十七张牌你能秒我，你能秒杀我？
+
+你今天要是十七张牌把我秒了, 我卢本伟当场，把这个电脑屏幕吃掉！
+""".strip()
+
+def pinyin2kana(s):
+    pinyin = lazy_pinyin(s)
+    # print(pinyin)
+    o=""
+    for i in pinyin:
+        if i.isalpha():
+            # if i[:3] == 'shi': i = "shy" + i[3:]
+            if i[:2]=='di' : i = "dei"+i[2:]
+            if i[:2]=='qi' : i = "ti"+i[2:]
+            if 'xu' in i : i = i.replace('xu','shu')
+            if 've' in i : i = i.replace('ve','yu')
+            if 'ie' in i : i = i.replace('ie','ye')
+            if 'ia' in i : i = i.replace('ia','ya')
+            if 'io' in i : i = i.replace('io','yo')
+            if 'iu' in i : i = i.replace('iu','yu')
+            if 'ui' in i : i = i.replace('ui','uei')
+            if 'ao' in i : i = i.replace('ao','o')
+            if 're' in i : i = i.replace('re','ye')
+            if 'er' in i : i = i.replace('er','a')
+
+            if i[-1]=='g': i = i[:-1]
+            if i[-1]=='e': i = i[:-1]+'a'
+            if i[0]=='c' and i[:2]!='ch': i = "ts"+i[1:]
+
+            # if i[:2]=='xi' : i = "shy"+i[2:]
+            if i[0] == 'x': i = "s" + i[1:]
+            if i[0]=='q' : i = "ch"+i[1:]
+            if i[:2]=='zh' : i = "j"+i[2:]
+
+            if i[-1] in "aoiuv" and len(i)>1 and i[-2] not in 'aoeiuv' : i += i[-1]
+            if 'v' in i : i = i.replace('v','yu')
+
+            kana = romajitable.to_kana(i).hiragana
+            o+=kana
+        else:
+            o+=i
+    print(o)
+    return o
+
+tmp = pinyin2kana(tmp)
 txt = urllib.parse.quote(tmp, safe='/', encoding=None, errors=None)
 
-
-vve_audio_query =  "http://127.0.0.1:50021/audio_query"
-vve_synthesis =  "http://127.0.0.1:50021/synthesis"
-vve =  "http://127.0.0.1:50021"
+vve_read =  "localhost:50021/read"
 
 
-txt_q = requests.post(f"{vve_audio_query}?speaker={speaker}&text={txt}").content
-
-audio = requests.post(f"{vve_synthesis}?speaker={speaker}",data=txt_q,headers={"Content-Type":"application/json"}).content
-# play(AudioSegment.from_file(io.BytesIO(audio), format="wav"))
-# print(audio[:100])
-winsound.PlaySound(audio, winsound.SND_MEMORY)
+requests.post(f"{vve_read}?speaker={speaker}&speed={speed}&text={txt}").content
